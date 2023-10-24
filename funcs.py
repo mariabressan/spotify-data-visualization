@@ -1,11 +1,20 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import pandas as pd
+import glob
 from scipy.optimize import curve_fit
 
-file = open('out', 'rb')
+file = open('out_10', 'rb')
 out = pickle.load(file)
 file.close()
+
+# Returns the raw data frame
+FileDir = "extended_data"
+def get_raw_df():
+    StreamingHistoryFileNames = StreamingHistoryFileNames = glob.glob(FileDir+"/Streaming_History_Audio_*.json")
+    dfs = [pd.read_json("extended_data/"+x) for x in StreamingHistoryFileNames]
+    return pd.concat(dfs)
 
 # Plots artists with number of listend over N
 def artistsOverN(N):
@@ -123,12 +132,14 @@ def topNSongsT(N):
     for a in out_tmp["artists_all"][-N:]:
         colors.append(col_dict[a])
     x = out_tmp["songs_all"][-N:]
+    print('songs_all[-N:]',x)
     y = np.array(out_tmp["sT_all"][-N:])/3600000
     plt.bar(x,y,color=colors)
     plt.ylabel("Hours listened")
     plt.title("Top "+str(N)+" songs, sorted by time")
     plt.xticks(rotation = 90)
-    plt.subplots_adjust(bottom=0.4)
+    plt.subplots_adjust(bottom=0.6)
+    plt.subplots_adjust(bottom=0.4,left=0.05, right=0.99)
     plt.show()
 
 # Top N artists sorted by time 
@@ -139,7 +150,7 @@ def topNArtistsT(N):
     for i in range(len(out_tmp["artists"])):
         out_tmp["sT"][i], out_tmp["sN"][i], out_tmp["songs"][i] = zip(*sorted(zip(out_tmp["sT"][i], out_tmp["sN"][i], out_tmp["songs"][i])))
     out_tmp["aT"], out_tmp["artists"], out_tmp["sT"]= zip(*sorted(zip(out_tmp["aT"], out_tmp["artists"], out_tmp["sT"])))
-    artists = out_tmp["artists"][-N:]
+    artists = list(out_tmp["artists"][-N:])
     times_played =list(out_tmp["sT"][-N:])
     for n,l in enumerate(times_played):
         times_played[n] = np.array(l)/3600000
@@ -165,4 +176,16 @@ def topNArtistsT(N):
     ax.set_xticklabels(artists, rotation=90)
     plt.title("Top "+str(N)+" artists, each song is a different color")
     plt.subplots_adjust(bottom=0.4,left=0.05, right=0.99)
+    plt.show()
+
+# Plot N for all.
+def Nall():
+    x = np.array(out['sT_all'])/1000/60
+    counts, bins = np.histogram(x, bins=100)
+    plt.stairs(counts, bins)
+    plt.title("Histogram of Time Listened for All Songs")
+    plt.ylabel("N")
+    plt.xlabel("T (min)")
+    plt.yscale('log')
+    plt.legend()
     plt.show()
